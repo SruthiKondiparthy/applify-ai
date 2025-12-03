@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: applify-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: applify-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - APPLIFY_API_URL=http://backend:8000/generate-resume
+    depends_on:
+      - backend
