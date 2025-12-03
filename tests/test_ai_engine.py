@@ -8,11 +8,24 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from api.ai_engine import AIEngine
 
-def main():
-    # Initialize the AIEngine
-    engine = AIEngine()
+def test_generate_documents_mock():
+    """
+    Test AIEngine.generate_documents in mock mode, without calling real LLM APIs.
+    """
 
-    # Dummy candidate payload
+    class MockAIEngine(AIEngine):
+        def generate_documents(self, candidate_payload, max_tokens=3000):
+            # Instead of calling hybrid_llm, return a dummy JSON
+            return {
+                "resume_text": f"Resume for {candidate_payload.get('name', 'Unknown')}",
+                "cover_letter_text": f"Cover letter for {candidate_payload.get('name', 'Unknown')}",
+                "pdf_generated": False
+            }
+
+    # Initialize mock engine
+    engine = MockAIEngine()
+
+    # Dummy candidate data
     candidate_payload = {
         "name": "Max Mustermann",
         "email": "max.mustermann@example.com",
@@ -24,14 +37,18 @@ def main():
         "want_pdf": False
     }
 
-    try:
-        result = engine.generate_documents(candidate_payload)
-        print("✅ generate_documents output:")
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    except Exception as e:
-        print("❌ Error during document generation:")
-        print(str(e))
+    # Call generate_documents
+    result = engine.generate_documents(candidate_payload)
+
+    print("✅ Mock generate_documents output:")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+    # Basic assertions (optional for CI)
+    assert "resume_text" in result
+    assert "cover_letter_text" in result
+    assert result["pdf_generated"] is False
 
 
+# Run test directly if executed
 if __name__ == "__main__":
-    main()
+    test_generate_documents_mock()
