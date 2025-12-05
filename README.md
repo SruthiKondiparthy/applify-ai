@@ -139,7 +139,7 @@ Runs on:
 http://127.0.0.1:8000
 
 6. Start Streamlit UI
-streamlit run app.py
+streamlit run ui.py
 
 
 Runs on:
