@@ -6,7 +6,7 @@ A **Next.js 14** frontend for the Applify AI CV & Cover Letter generator.
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 14 |
+| Framework | Next.js 15 |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS 3 |
 | State | Zustand (with localStorage persistence) |
