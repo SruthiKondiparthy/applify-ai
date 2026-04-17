@@ -253,7 +253,7 @@ export default function ResumeForm() {
                     <textarea
                       className={inputClass}
                       rows={3}
-                      placeholder="- Developed features&#10;- Led code reviews"
+                      placeholder={"- Developed features\n- Led code reviews"}
                       value={(exp.responsibilities || []).join('\n')}
                       onChange={(e) =>
                         updateExperience(index, {
