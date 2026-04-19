@@ -7,6 +7,7 @@ node_modules/
 .next/
 out/
 build/
+dist/
 
 # Environment files (never commit secrets)
 .env
@@ -31,3 +32,6 @@ Thumbs.db
 # TypeScript build info
 *.tsbuildinfo
 next-env.d.ts
+
+# Vercel
+.vercel

@@ -1,15 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 120_000,
-});
-
-// ---- TypeScript types -------------------------------------------------------
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface ExperienceItem {
   job_title: string;
@@ -34,44 +25,47 @@ export interface LanguageItem {
   level: string;
 }
 
-export interface GenerateResumeRequest {
+export interface CandidateInput {
   name: string;
   email: string;
   phone?: string;
   address?: string;
+  birth_date?: string;
+  birth_place?: string;
   summary?: string;
+  skills?: string[];
+  interests?: string[];
   experience?: ExperienceItem[];
   education?: EducationItem[];
-  skills?: string[];
   languages?: LanguageItem[];
+  additional_info?: string;
   job_description: string;
-  parsed_resume_text?: string;
-  output_language?: string;
   include_simple_version?: boolean;
   want_pdf?: boolean;
-  parse_only?: boolean;
 }
 
 export interface GenerateResumeResponse {
   cv_text: string;
   cover_letter_text: string;
-  unterlagen_info?: string;
+  unterlagen_info: string;
   cv_simple?: string;
   cover_letter_simple?: string;
   pdf_base64?: string;
   docx_base64?: string;
-  pdf_error?: string;
   generated_at: string;
 }
 
-// ---- API calls --------------------------------------------------------------
+const apiClient = axios.create({
+  baseURL: API_URL,
+  timeout: 120000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export async function generateResume(
-  payload: GenerateResumeRequest,
-): Promise<GenerateResumeResponse> {
-  const { data } = await apiClient.post<GenerateResumeResponse>(
-    '/generate-resume',
-    payload,
-  );
-  return data;
+export async function generateResume(data: CandidateInput): Promise<GenerateResumeResponse> {
+  const response = await apiClient.post<GenerateResumeResponse>('/generate-resume', data);
+  return response.data;
 }
+
+export default apiClient;
