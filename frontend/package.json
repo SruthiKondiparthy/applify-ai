@@ -1,11 +1,3 @@
-# Go to your frontend directory
-cd frontend
-
-# Delete the corrupted file
-rm package.json
-
-# Create a new one with correct content
-cat > package.json << 'EOF'
 {
   "name": "applify-ai",
   "version": "1.0.0",
@@ -35,4 +27,3 @@ cat > package.json << 'EOF'
     "@types/react-dom": "^18.3.0"
   }
 }
-EOF
