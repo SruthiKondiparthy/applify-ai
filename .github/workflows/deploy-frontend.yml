@@ -42,7 +42,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: Deploy to Vercel
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.VERCEL_TOKEN != ''
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: vercel/action@main
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
