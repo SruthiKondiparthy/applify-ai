@@ -4,7 +4,9 @@
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",  
   "installCommand": "cd frontend && npm ci",
-  "nodeVersion": "20.x",
+  "env": {
+    "NODE_VERSION": "20.x"
+  },
   "rewrites": [
     {
       "source": "/api/:path*",
