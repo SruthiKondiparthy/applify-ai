@@ -2,8 +2,9 @@
   "version": 2,
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
-  "framework": "nextjs",
+  "framework": "nextjs",  
   "installCommand": "cd frontend && npm ci",
+  "nodeVersion": "20.x",
   "rewrites": [
     {
       "source": "/api/:path*",
