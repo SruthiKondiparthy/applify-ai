@@ -44,7 +44,7 @@ jobs:
       - name: Deploy to Vercel
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
-          npm install --global vercel@latest
+          npm install --global vercel@latest@47.2.2
           vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
