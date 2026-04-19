@@ -2,13 +2,15 @@ name: Deploy Frontend to Vercel
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
     paths:
-      - 'frontend/**'
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
     paths:
-      - 'frontend/**'
+      - "frontend/**"
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -23,8 +25,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -42,11 +44,11 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: Deploy to Vercel
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}          
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./frontend
-          production: true
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
+          working-directory: frontend
+          vercel-args: '--prod'
