@@ -25,7 +25,7 @@ __pycache__/
 # Python caches
 .pytest_cache/
 
-# Frontend
+# Frontend build artifacts and dependencies
 frontend/node_modules/
 frontend/.next/
 frontend/out/
