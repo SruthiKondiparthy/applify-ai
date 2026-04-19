@@ -36,5 +36,4 @@ next-env.d.ts
 # Vercel
 .vercel
 
-# TypeScript Next.js auto-generated
-next-env.d.ts
+
