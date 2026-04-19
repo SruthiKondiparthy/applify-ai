@@ -1,6 +1,6 @@
 # Applify — Frontend
 
-A **Next.js 14** frontend for the Applify AI CV & Cover Letter generator.
+A **Next.js 15** frontend for the Applify AI CV & Cover Letter generator.
 
 ## Tech Stack
 
