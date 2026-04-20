@@ -96,10 +96,6 @@ APPLIFY/
 │ └── german_cover_letter_template.j2
 ├── services/
 │ └── llm_service.py
-├── app/
-│ └── helpers.py
-├── data/sample_resume.json
-├── docs/software_design_document.md
 ├── tests/
 ├── requirements.txt
 ├── Dockerfile
