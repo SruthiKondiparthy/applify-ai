@@ -1,9 +1,5 @@
 # 🇩🇪 Applify — AI-Powered German CV & Cover Letter Generator
 
-_Create professional Bewerbungsunterlagen in one click_
-
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://applify-ai.vercel.app)
-
 Applify is a full-stack AI application that generates **German-formatted CVs (Lebenslauf)**, **Anschreiben (Cover Letters)**, and **Bewerbungsunterlagen guidance** based on official rules from **Bundesagentur für Arbeit (arbeitsagentur.de)**. The backend is powered by **Python/FastAPI** with **DeepSeek/Ollama LLMs**, and the frontend is a modern **Next.js (React)** app deployed on **Vercel**.
 
 The user can:
