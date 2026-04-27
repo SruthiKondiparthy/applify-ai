@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X, Zap } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -9,7 +10,12 @@ export default function Navbar() {
     <nav className="border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl text-white hover:text-blue-400 transition-colors">
-          <Zap className="w-6 h-6 text-blue-400" />
+        <Image
+          src="/applify_logo.png"
+          alt="Applify Logo"
+          width={28}
+          height={28}
+        />          
           Applify AI
         </Link>
 
