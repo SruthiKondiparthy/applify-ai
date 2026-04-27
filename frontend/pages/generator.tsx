@@ -63,8 +63,8 @@ export default function Generator() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">CV & Cover Letter Generator</h1>
           <p className="text-slate-400">
-            Fill in your details and let AI generate a tailored application for you.
-          </p>
+            Fill in your details and your dream job and let AI generate a tailored application for you.
+          </p>          
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">

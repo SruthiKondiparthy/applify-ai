@@ -104,10 +104,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-slate-700 rounded-2xl p-12">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
-          <p className="text-slate-300 mb-8">
-            Join thousands of job seekers who have landed interviews with Applify AI.
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>          
           <Link
             href="/generator"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all"

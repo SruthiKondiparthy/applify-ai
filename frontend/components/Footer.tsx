@@ -1,12 +1,21 @@
 import Link from 'next/link';
 import { Zap, Github } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
     <footer className="border-t border-slate-700 bg-slate-900 py-8 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-white">
-          <Zap className="w-5 h-5 text-blue-400" />
+          <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-900">
+            <Image
+              src="/applify_logo.png"
+              alt="Applify Logo"
+              width={32}
+              height={32}
+              className="object-cover scale-110"
+            />
+          </div>
           Applify AI
         </Link>
 
