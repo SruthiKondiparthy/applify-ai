@@ -10,12 +10,15 @@ export default function Navbar() {
     <nav className="border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl text-white hover:text-blue-400 transition-colors">
-        <Image
-          src="/applify_logo.png"
-          alt="Applify Logo"
-          width={28}
-          height={28}
-        />          
+        <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-900">
+          <Image
+            src="/applify_logo.png"
+            alt="Applify Logo"
+            width={32}
+            height={32}
+            className="object-cover scale-110"
+          />
+        </div>          
           Applify AI
         </Link>
 
