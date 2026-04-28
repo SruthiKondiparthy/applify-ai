@@ -138,7 +138,7 @@ export const useResumeStore = create<ResumeState>()(
       reset: () => set({ formData: defaultFormData, result: null, error: null }),
     }),
     {
-      name: 'applify-resume-store',
+      name: 'genr8cv-resume-store',
     }
   )
 );
