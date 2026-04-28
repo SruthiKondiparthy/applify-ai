@@ -46,73 +46,60 @@ export default function Home() {
         />
       </Head>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-slate-900 pointer-events-none" />
-        <div className="max-w-5xl mx-auto text-center relative z-10 animate-fadeIn">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              AI-Powered
-            </span>{' '}
-            <span className="text-white">Job Applications</span>
-          </h1>
-          <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-            Generate professional CVs and cover letters tailored to your dream job in seconds.
-            Stand out from the crowd with AI-crafted, ATS-optimized documents.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/generator"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-blue-500/25"
-            >
-              Start Generating <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a
-              href="https://github.com/SruthiKondiparthy/applify-ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border border-slate-600 text-slate-300 px-8 py-3 rounded-lg font-semibold hover:border-slate-400 hover:text-white transition-all"
-            >
-              View on GitHub
-            </a>
-          </div>
-        </div>
-      </section>
+        return (
+          <>
+            <Head>
+              <title>Genr8CV - Energize Your Job Search</title>
+              <meta name="description" content="Energize your job search. Instantly create resumes from job ads." />
+            </Head>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-12">
-            Everything You Need to Land Your Dream Job
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-500 transition-all animate-slideUp"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-slate-400 text-sm">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            <main className="min-h-screen bg-[#F9FAFB] font-sans">
+              <header className="bg-gradient-to-r from-orange-400 via-pink-500 to-pink-600 text-white p-10 rounded-b-3xl shadow-lg mb-12 animate-fadeIn">
+                <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div>
+                    <h1 className="text-5xl font-extrabold tracking-tight mb-2 font-sans">Genr8CV</h1>
+                    <p className="text-xl font-medium mb-4">Energize your job search.<br className="hidden md:inline" /> Instantly create resumes from job ads.</p>
+                    <Link href="/generator">
+                      <span className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:scale-105 transition-transform text-lg">Get Started</span>
+                    </Link>
+                  </div>
+                  <svg width="120" height="120" viewBox="0 0 180 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-40 h-40 rounded-2xl shadow-2xl border-4 border-white">
+                    <defs>
+                      <linearGradient id="bg" x1="0" y1="0" x2="180" y2="48" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#FF9800"/>
+                        <stop offset="1" stopColor="#EC4899"/>
+                      </linearGradient>
+                      <linearGradient id="bolt" x1="16" y1="18" x2="32" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#FFD600"/>
+                        <stop offset="1" stopColor="#FF9800"/>
+                      </linearGradient>
+                    </defs>
+                    <rect width="48" height="48" rx="12" fill="url(#bg)"/>
+                    <g>
+                      <rect x="10" y="10" width="28" height="28" rx="6" fill="white"/>
+                      <polygon points="24,14 28,22 22,22 28,34 24,26 30,26" fill="url(#bolt)"/>
+                    </g>
+                  </svg>
+                </div>
+              </header>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-slate-700 rounded-2xl p-12">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>          
-          <Link
-            href="/generator"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all"
-          >
-            Generate My Application <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </section>
-    </>
+              <section className="max-w-4xl mx-auto px-4 py-8">
+                <h2 className="text-2xl font-bold text-[#1E293B] mb-6">Why Genr8CV?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {features.map((feature, idx) => (
+                    <div key={idx} className="bg-white rounded-xl shadow p-6 flex items-center gap-4 animate-slideUp">
+                      <div>{feature.icon}</div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-[#1E293B] mb-1">{feature.title}</h3>
+                        <p className="text-slate-600">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </main>
+          </>
+        );
+      }
   );
 }

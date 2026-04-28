@@ -1,3 +1,15 @@
+def calculate_match_percentage(resume_text: str, job_text: str) -> float:
+    """
+    Calculates a simple match percentage between resume and job description using token overlap.
+    Returns a value between 0 and 100.
+    """
+    import re
+    resume_tokens = set(re.findall(r'\w+', resume_text.lower()))
+    job_tokens = set(re.findall(r'\w+', job_text.lower()))
+    if not job_tokens:
+        return 0.0
+    overlap = resume_tokens & job_tokens
+    return round(100 * len(overlap) / len(job_tokens), 2)
 # api/utils.py
 from io import BytesIO
 from typing import Tuple

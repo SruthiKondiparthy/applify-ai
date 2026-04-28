@@ -43,6 +43,7 @@ const defaultFormData: CandidateInput = {
   experience: [],
   education: [],
   languages: [],
+  language: '',
   additional_info: '',
   job_description: '',
   include_simple_version: false,

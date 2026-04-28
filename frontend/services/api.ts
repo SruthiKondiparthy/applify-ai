@@ -1,3 +1,28 @@
+// Extract requirements from job description
+export async function extractRequirements(jobDescription: string, language: string = 'en'): Promise<any> {
+  const response = await axios.post(`${API_URL}/extract-requirements`, {
+    job_description: jobDescription,
+    language,
+  });
+  return response.data;
+}
+// Get match percentage between resume and job description
+export async function matchPercentage(resumeText: string, jobText: string): Promise<{ match_percentage: number }> {
+  const response = await axios.post(`${API_URL}/match-percentage`, {
+    resume_text: resumeText,
+    job_text: jobText,
+  });
+  return response.data;
+}
+// Upload resume file and get parsed text
+export async function uploadResume(file: File): Promise<{ text: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await axios.post(`${API_URL}/upload-resume`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -27,6 +52,7 @@ export interface LanguageItem {
 
 export interface CandidateInput {
   name: string;
+  language?: string;
   email: string;
   phone?: string;
   address?: string;
