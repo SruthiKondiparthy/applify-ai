@@ -1,5 +1,5 @@
 # api/schemas.py
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
@@ -28,7 +28,7 @@ class LanguageItem(BaseModel):
 
 class CandidateInput(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = ""
     address: Optional[str] = ""
     birth_date: Optional[str] = None
