@@ -2,9 +2,25 @@ import Head from 'next/head';
 import { useState } from 'react';
 import { Check, Copy, FileText, Info, Mail, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import ResumeForm from '../components/ResumeForm';
 import { analyzeCompatibility, extractJDRequirements } from '../services/api';
 import { useResumeStore } from '../store/resumeStore';
+
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const detail = (error.response?.data as { detail?: string } | undefined)?.detail;
+    if (detail) return detail;
+    if (error.message === 'Network Error') {
+      return 'Cannot reach backend API. Check NEXT_PUBLIC_API_URL/BACKEND_API_URL and backend server status.';
+    }
+  }
+
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -81,8 +97,8 @@ export default function Generator() {
       setCompatibility(data);
       setFormData({ job_description: jobDescription });
       toast.success('Compatibility analysis ready.');
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to analyze compatibility.');
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, 'Failed to analyze compatibility.'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -99,8 +115,8 @@ export default function Generator() {
       setJdRequirements(data);
       setFormData({ job_description: jobDescription });
       toast.success('JD requirements extracted.');
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to extract requirements.');
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, 'Failed to extract requirements.'));
     } finally {
       setIsAnalyzing(false);
     }
