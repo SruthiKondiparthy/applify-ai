@@ -22,6 +22,45 @@ function getApiErrorMessage(error: unknown, fallback: string) {
 }
 
 
+
+function extractKeywordsFromText(text: string): string[] {
+  const stopWords = new Set(['and', 'the', 'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'will', 'our', 'their', 'have', 'has', 'job', 'role']);
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s+.#-]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !stopWords.has(w));
+
+  return Array.from(new Set(words)).slice(0, 12);
+}
+
+function localExtractJDRequirements(jobDescription: string) {
+  const lines = jobDescription
+    .replace(/;/g, '\n')
+    .replace(/\./g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const skillHints = ['python', 'fastapi', 'docker', 'aws', 'kubernetes', 'react', 'node', 'sql', 'java', 'typescript', 'ci/cd', 'terraform'];
+  const normalized = jobDescription.toLowerCase();
+  const mustHave = skillHints.filter((skill) => normalized.includes(skill));
+
+  const keyRequirements = lines.slice(0, 6);
+  const keywords = extractKeywordsFromText(jobDescription);
+
+  return {
+    job_title: 'Role extracted from JD',
+    key_requirements: keyRequirements.length ? keyRequirements : ['Review job responsibilities and translate into resume bullets.'],
+    must_have_skills: mustHave.length ? mustHave : keywords.slice(0, 6),
+    optional_skills: keywords.slice(6, 10),
+    keywords,
+    suggested_resume_sections: ['Summary', 'Key Skills', 'Experience', 'Projects', 'Education'],
+    generated_at: new Date().toISOString(),
+    fallback_mode: true,
+  };
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -116,7 +155,16 @@ export default function Generator() {
       setFormData({ job_description: jobDescription });
       toast.success('JD requirements extracted.');
     } catch (e: unknown) {
-      toast.error(getApiErrorMessage(e, 'Failed to extract requirements.'));
+      const message = getApiErrorMessage(e, 'Failed to extract requirements.');
+
+      if (message.includes('Cannot reach backend API')) {
+        const fallback = localExtractJDRequirements(jobDescription);
+        setJdRequirements(fallback);
+        setFormData({ job_description: jobDescription });
+        toast.success('Backend unavailable: showing quick local JD extraction.');
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -233,6 +281,9 @@ export default function Generator() {
             <div className="bg-slate-900/60 border border-fuchsia-400/30 rounded-xl p-5 mb-4">
               <h3 className="text-white font-semibold">Target Role: {jdRequirements.job_title || 'Not specified'}</h3>
               <p className="text-slate-300 text-sm mt-1">These requirements are extracted from the JD. Continue when ready.</p>
+              {jdRequirements.fallback_mode && (
+                <p className="text-amber-300 text-xs mt-2">Using local fallback extraction because backend was unreachable.</p>
+              )}
             </div>
             <ListSection title="Key Requirements" items={jdRequirements.key_requirements || []} />
             <ListSection title="Must-Have Skills" items={jdRequirements.must_have_skills || []} />
