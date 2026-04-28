@@ -55,6 +55,25 @@ export interface GenerateResumeResponse {
   generated_at: string;
 }
 
+export interface CompatibilityResponse {
+  match_score: number;
+  requirements: string[];
+  strengths: string[];
+  gaps: string[];
+  recommended_documents: string[];
+  generated_at: string;
+}
+
+export interface JDRequirementsResponse {
+  job_title: string;
+  key_requirements: string[];
+  must_have_skills: string[];
+  optional_skills: string[];
+  keywords: string[];
+  suggested_resume_sections: string[];
+  generated_at: string;
+}
+
 const apiClient = axios.create({
   baseURL: API_URL,
   timeout: 120000,
@@ -65,6 +84,21 @@ const apiClient = axios.create({
 
 export async function generateResume(data: CandidateInput): Promise<GenerateResumeResponse> {
   const response = await apiClient.post<GenerateResumeResponse>('/generate-resume', data);
+  return response.data;
+}
+
+export async function analyzeCompatibility(payload: {
+  resume_text: string;
+  job_description: string;
+}): Promise<CompatibilityResponse> {
+  const response = await apiClient.post<CompatibilityResponse>('/analyze-compatibility', payload);
+  return response.data;
+}
+
+export async function extractJDRequirements(payload: {
+  job_description: string;
+}): Promise<JDRequirementsResponse> {
+  const response = await apiClient.post<JDRequirementsResponse>('/extract-jd-requirements', payload);
   return response.data;
 }
 
