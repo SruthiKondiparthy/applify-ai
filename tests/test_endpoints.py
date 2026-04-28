@@ -93,3 +93,29 @@ def test_extract_jd_requirements_returns_structured_fields(monkeypatch):
 def test_analyze_compatibility_validation_error():
     response = client.post("/analyze-compatibility", json={"job_description": "Missing resume_text"})
     assert response.status_code == 422
+
+
+def test_extract_jd_requirements_accepts_plain_text(monkeypatch):
+    jd_text = "Need Python, FastAPI, and Docker for backend role"
+
+    def mock_ask_for_json(prompt: str):
+        assert jd_text in prompt
+        return {
+            "job_title": "Backend Developer",
+            "key_requirements": ["Build APIs"],
+            "must_have_skills": ["Python", "FastAPI", "Docker"],
+            "optional_skills": [],
+            "keywords": ["backend"],
+            "suggested_resume_sections": ["Experience"],
+        }
+
+    monkeypatch.setattr(main.ai, "ask_for_json", mock_ask_for_json)
+
+    response = client.post(
+        "/extract-jd-requirements",
+        content=jd_text,
+        headers={"content-type": "text/plain"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["job_title"] == "Backend Developer"

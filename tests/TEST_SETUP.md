@@ -8,6 +8,7 @@ This folder contains backend-focused functional tests and deterministic test dat
 2. `POST /analyze-compatibility`
 3. `POST /extract-jd-requirements`
 4. AIEngine JSON parsing and prompt composition behavior
+5. JD extraction endpoint accepts both JSON payload and raw text/plain body
 
 ## Test data
 

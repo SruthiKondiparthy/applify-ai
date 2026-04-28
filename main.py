@@ -4,12 +4,12 @@ from typing import Any, Dict
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.ai_engine import AIEngine
 from api.format_engine import render_cover_letter_text, render_cv_text
-from api.schemas import CandidateInput, JDRequirementsInput, ResumeCompatibilityInput
+from api.schemas import CandidateInput, ResumeCompatibilityInput
 from api.utils import create_docx_from_text, create_pdf_from_text
 
 load_dotenv()
@@ -25,6 +25,33 @@ app.add_middleware(
 )
 
 ai = AIEngine()
+
+
+async def _extract_job_description(request: Request) -> str:
+    content_type = (request.headers.get("content-type") or "").lower()
+
+    if "application/json" in content_type:
+        payload = await request.json()
+        if isinstance(payload, dict):
+            jd = str(payload.get("job_description", "")).strip()
+            if jd:
+                return jd
+        if isinstance(payload, str):
+            jd = payload.strip()
+            if jd:
+                return jd
+
+    raw_text = (await request.body()).decode("utf-8", errors="ignore").strip()
+    if raw_text:
+        return raw_text
+
+    raise HTTPException(
+        status_code=422,
+        detail=(
+            "Provide the job description either as raw text/plain body or JSON: "
+            '{"job_description": "..."}'
+        ),
+    )
 
 
 @app.post("/generate-resume", response_model=Dict[str, Any])
@@ -107,7 +134,9 @@ RESUME_TEXT:
 
 
 @app.post("/extract-jd-requirements", response_model=Dict[str, Any])
-async def extract_jd_requirements(payload: JDRequirementsInput):
+async def extract_jd_requirements(request: Request):
+    job_description = await _extract_job_description(request)
+
     prompt = f"""
 You are a hiring assistant. Extract role requirements from a job description.
 Return JSON only with this exact structure:
@@ -121,7 +150,7 @@ Return JSON only with this exact structure:
 }}
 
 JOB_DESCRIPTION:
-{payload.job_description}
+{job_description}
 """
     try:
         result = ai.ask_for_json(prompt)
