@@ -1,3 +1,31 @@
+    def extract_requirements_from_jd(self, job_description: str, language: str = 'en') -> Dict[str, Any]:
+        """
+        Uses the LLM to extract requirements (skills, education, languages, etc.) from a job description.
+        """
+        prompt = (
+            f"Extract the following information from this job description (language: {language}):\n"
+            "- List of required and preferred skills\n"
+            "- Minimum education qualification\n"
+            "- Required languages\n"
+            "- Whether relocation is required\n"
+            "- Whether a driving license is required\n"
+            "Return a JSON object with keys: skills (list), education (string), languages (list), relocation (bool or string), driving_license (bool or string).\n"
+            f"\nJob Description:\n{job_description}\n"
+        )
+        try:
+            raw_output = hybrid_llm(prompt)
+            parsed = json.loads(raw_output)
+        except Exception:
+            # Try extracting JSON substring
+            try:
+                start = raw_output.index("{")
+                end = raw_output.rindex("}") + 1
+                parsed = json.loads(raw_output[start:end])
+            except Exception as e:
+                raise RuntimeError(f"Failed to parse LLM output as JSON.\nRaw Output:\n{raw_output}") from e
+        if not isinstance(parsed, dict):
+            raise RuntimeError("Model output parsed but is not a JSON object.")
+        return parsed
 # api/ai_engine.py
 
 import os

@@ -1,9 +1,62 @@
+@app.post("/extract-requirements")
+async def extract_requirements(
+    job_description: str = Body(..., embed=True),
+    language: str = Body('en', embed=True)
+):
+    """
+    Extracts requirements (skills, education, languages, etc.) from a job description using LLM.
+    """
+    try:
+        ai = AIEngine()
+        result = ai.extract_requirements_from_jd(job_description, language)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return result
+from api.utils import create_pdf_from_text, create_docx_from_text, calculate_match_percentage
+# Endpoint to calculate match percentage between resume and job description
+from fastapi import Body
+
+@app.post("/match-percentage")
+async def match_percentage(
+    resume_text: str = Body(..., embed=True),
+    job_text: str = Body(..., embed=True)
+):
+    """
+    Returns the match percentage between resume and job description text.
+    """
+    percent = calculate_match_percentage(resume_text, job_text)
+    return {"match_percentage": percent}
 # api/main.py
 import os
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any, Dict
+import io
+from PyPDF2 import PdfReader
+import docx
+@app.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    """
+    Accepts a resume file (PDF, DOCX, or TXT), extracts and returns the plain text content.
+    """
+    filename = file.filename.lower()
+    content = await file.read()
+    text = ""
+    try:
+        if filename.endswith(".pdf"):
+            pdf_reader = PdfReader(io.BytesIO(content))
+            text = "\n".join(page.extract_text() or "" for page in pdf_reader.pages)
+        elif filename.endswith(".docx") or filename.endswith(".doc"):
+            doc = docx.Document(io.BytesIO(content))
+            text = "\n".join([para.text for para in doc.paragraphs])
+        elif filename.endswith(".txt"):
+            text = content.decode("utf-8", errors="ignore")
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse file: {str(e)}")
+    return {"text": text}
 from api.schemas import CandidateInput
 from api.ai_engine import AIEngine
 from api.format_engine import render_cv_text, render_cover_letter_text
@@ -29,6 +82,7 @@ ai = AIEngine()
 async def generate_resume(candidate: CandidateInput):
     """
     Generate CV + Cover Letter + Unterlagen Info
+    The 'language' field in candidate determines the output language (e.g., 'en' or 'de').
     """
     payload = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate.dict()
     try:

@@ -43,3 +43,4 @@ class CandidateInput(BaseModel):
     job_description: str = Field(..., description="Full text of the target job ad")
     include_simple_version: Optional[bool] = False
     want_pdf: Optional[bool] = False
+    language: Optional[str] = Field('en', description="Language for generated documents, e.g. 'en' or 'de'")

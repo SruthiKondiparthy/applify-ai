@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useResumeStore } from '../store/resumeStore';
-import { generateResume } from '../services/api';
+import { generateResume, uploadResume, matchPercentage } from '../services/api';
 import type { ExperienceItem, EducationItem, LanguageItem } from '../services/api';
 
 const inputClass =
-  'w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm';
-const labelClass = 'block text-sm font-medium text-slate-300 mb-1';
-const sectionClass = 'bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-6';
+  'w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 text-sm';
+const labelClass = 'block text-sm font-medium text-[#EC4899] mb-1';
+const sectionClass = 'bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow';
 
 function SectionHeader({
   title,
@@ -35,6 +35,7 @@ function SectionHeader({
   );
 }
 
+
 export default function ResumeForm() {
   const { formData, setFormData, addExperience, removeExperience, updateExperience,
     addEducation, removeEducation, updateEducation, addLanguage, removeLanguage, updateLanguage,
@@ -56,11 +57,56 @@ export default function ResumeForm() {
   const [skillsInput, setSkillsInput] = useState(formData.skills?.join(', ') || '');
   const [interestsInput, setInterestsInput] = useState(formData.interests?.join(', ') || '');
 
+  // New state for uploaded resume file and parsed text
+  const [uploadedResume, setUploadedResume] = useState<File | null>(null);
+  const [parsedResumeText, setParsedResumeText] = useState<string>('');
+  const [matchPercent, setMatchPercent] = useState<number | null>(null);
+  const [isCalculatingMatch, setIsCalculatingMatch] = useState(false);
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setUploadedResume(file);
+      try {
+        const result = await uploadResume(file);
+        setParsedResumeText(result.text);
+        toast.success(`Resume parsed! ${result.text.length} characters extracted.`);
+      } catch (err) {
+        setParsedResumeText('');
+        toast.error('Failed to parse resume.');
+      }
+    } else {
+      setUploadedResume(null);
+      setParsedResumeText('');
+    }
+  };
+
+  const handleCalculateMatch = async () => {
+    if (!parsedResumeText || !formData.job_description) {
+      toast.error('Please upload a resume and enter a job description.');
+      return;
+    }
+    setIsCalculatingMatch(true);
+    setMatchPercent(null);
+    try {
+      const result = await matchPercentage(parsedResumeText, formData.job_description);
+      setMatchPercent(result.match_percentage);
+    } catch (err) {
+      toast.error('Failed to calculate match percentage.');
+    } finally {
+      setIsCalculatingMatch(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.job_description) {
       toast.error('Please fill in Name, Email, and Job Description.');
       return;
+    }
+    // For now, just log the uploaded file (to be sent to backend in next steps)
+    if (uploadedResume) {
+      console.log('Uploaded resume:', uploadedResume);
     }
 
     setLoading(true);
@@ -94,6 +140,28 @@ export default function ResumeForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
+      {/* Language Selection */}
+      <div className={sectionClass}>
+        <SectionHeader
+          title="Language Selection"
+          expanded={true}
+          onToggle={() => {}}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Select Language *</label>
+            <select
+              className={inputClass}
+              value={formData.language || 'en'}
+              onChange={(e) => setFormData({ language: e.target.value })}
+              required
+            >
+              <option value="en">English</option>
+              <option value="de">German</option>
+            </select>
+          </div>
+        </div>
+      </div>
       {/* Personal Information */}
       <div className={sectionClass}>
         <SectionHeader
@@ -174,6 +242,19 @@ export default function ResumeForm() {
                 value={formData.summary || ''}
                 onChange={(e) => setFormData({ summary: e.target.value })}
               />
+            </div>
+            {/* Resume Upload */}
+            <div className="md:col-span-2">
+              <label className={labelClass}>Upload Existing Resume (PDF, DOCX, TXT)</label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                onChange={handleResumeUpload}
+              />
+              {uploadedResume && (
+                <span className="text-xs text-slate-400 mt-1 block">Selected: {uploadedResume.name}</span>
+              )}
             </div>
           </div>
         )}
@@ -464,7 +545,7 @@ export default function ResumeForm() {
         )}
       </div>
 
-      {/* Job Description */}
+      {/* Job Description & Match Percentage */}
       <div className={sectionClass}>
         <SectionHeader
           title="Job Description"
@@ -483,6 +564,20 @@ export default function ResumeForm() {
                 onChange={(e) => setFormData({ job_description: e.target.value })}
                 required
               />
+            </div>
+            {/* Match Percentage UI */}
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <button
+                type="button"
+                onClick={handleCalculateMatch}
+                disabled={!parsedResumeText || !formData.job_description || isCalculatingMatch}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isCalculatingMatch ? 'Calculating...' : 'Check Resume-Job Match %'}
+              </button>
+              {matchPercent !== null && (
+                <span className="text-lg font-semibold text-green-400">Match: {matchPercent}%</span>
+              )}
             </div>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -511,7 +606,7 @@ export default function ResumeForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-gradient-to-r from-orange-400 via-pink-500 to-pink-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>
