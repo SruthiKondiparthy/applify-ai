@@ -56,8 +56,8 @@ export default function Home() {
             <span className="text-white">for Smart Applications</span>
           </h1>
           <p className="text-xl text-slate-200 mb-10 max-w-3xl mx-auto">
-            Main goal: generate a strong resume and cover letter from a job description. If you already have a resume,
-            compare and find gaps first. If you don&apos;t, extract requirements from JD and build your resume with guidance.
+            Turn any job description into an interview-ready application in minutes. Genr8CV helps you uncover skill gaps,
+            sharpen your positioning, and ship a standout resume + cover letter with confidence.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
