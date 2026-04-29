@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -42,15 +43,25 @@ def find_free_port(start_port: int) -> int:
         port += 1
 
 
+
+
+def find_command(*candidates: str) -> str | None:
+    for cmd in candidates:
+        path = shutil.which(cmd)
+        if path:
+            return path
+    return None
+
+
 def run_backend(port: int, watch_mode: bool):
     log_file = open("logs/backend.log", "w")
     success(f"Starting Backend (FastAPI) on port {port}...")
 
-    cmd = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(port)]
+    uvicorn_cmd = [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(port)]
     if watch_mode:
-        cmd.append("--reload")
+        uvicorn_cmd.append("--reload")
 
-    return subprocess.Popen(cmd, stdout=log_file, stderr=log_file)
+    return subprocess.Popen(uvicorn_cmd, stdout=log_file, stderr=log_file)
 
 
 def run_frontend(port: int):
@@ -62,7 +73,13 @@ def run_frontend(port: int):
     env.setdefault("NEXT_PUBLIC_API_URL", "/api")
     env.setdefault("BACKEND_API_URL", f"http://127.0.0.1:{backend_port_global}")
 
-    cmd = ["npm", "run", "dev", "--", "--port", str(port)]
+    npm_cmd = find_command("npm", "npm.cmd")
+    if not npm_cmd:
+        raise FileNotFoundError(
+            "npm was not found in PATH. Install Node.js and ensure npm is available."
+        )
+
+    cmd = [npm_cmd, "run", "dev", "--", "--port", str(port)]
     return subprocess.Popen(cmd, cwd="frontend", env=env, stdout=log_file, stderr=log_file)
 
 
