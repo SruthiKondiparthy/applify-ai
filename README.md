@@ -126,7 +126,7 @@ applify-ai/                          # Monorepo root
 ## 🚀 Installation & Setup
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.12 (recommended) or 3.11
 - Node.js 20.x
 - npm
 
