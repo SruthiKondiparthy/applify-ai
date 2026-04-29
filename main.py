@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from typing import Any, Dict
 
@@ -26,6 +27,36 @@ app.add_middleware(
 
 ai = AIEngine()
 
+def _local_extract_jd_requirements(job_description: str) -> Dict[str, Any]:
+    chunks = [part.strip() for part in re.split(r"[\n.;]", job_description) if part.strip()]
+
+    skill_hints = [
+        "python", "fastapi", "docker", "aws", "kubernetes", "terraform",
+        "react", "node", "typescript", "sql", "java", "ci/cd"
+    ]
+    jd_lower = job_description.lower()
+    must_have = [skill for skill in skill_hints if skill in jd_lower]
+
+    words = re.findall(r"[A-Za-z0-9+#.\-]{4,}", jd_lower)
+    stop = {"with", "from", "that", "this", "your", "have", "will", "role", "job", "must", "nice", "need"}
+    keywords = []
+    for w in words:
+        if w in stop:
+            continue
+        if w not in keywords:
+            keywords.append(w)
+        if len(keywords) >= 12:
+            break
+
+    return {
+        "job_title": "Role extracted from JD",
+        "key_requirements": chunks[:6] or ["Review responsibilities and convert to resume bullets."],
+        "must_have_skills": must_have or keywords[:6],
+        "optional_skills": keywords[6:10],
+        "keywords": keywords,
+        "suggested_resume_sections": ["Summary", "Skills", "Experience", "Projects", "Education"],
+        "fallback_mode": True,
+    }
 
 async def _extract_job_description(request: Request) -> str:
     content_type = (request.headers.get("content-type") or "").lower()
@@ -52,8 +83,6 @@ async def _extract_job_description(request: Request) -> str:
             '{"job_description": "..."}'
         ),
     )
-
-
 @app.post("/generate-resume", response_model=Dict[str, Any])
 async def generate_resume(candidate: CandidateInput):
     payload = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate.dict()
@@ -156,8 +185,11 @@ JOB_DESCRIPTION:
         result = ai.ask_for_json(prompt)
         result["generated_at"] = datetime.utcnow().isoformat() + "Z"
         return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        fallback = _local_extract_jd_requirements(job_description)
+        fallback["generated_at"] = datetime.utcnow().isoformat() + "Z"
+        fallback["warning"] = "LLM unavailable, returned local fallback extraction."
+        return fallback
 
 
 if __name__ == "__main__":

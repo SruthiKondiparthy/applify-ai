@@ -119,3 +119,19 @@ def test_extract_jd_requirements_accepts_plain_text(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["job_title"] == "Backend Developer"
+
+    def test_extract_jd_requirements_falls_back_when_llm_fails(monkeypatch):
+    payload = _load_json("jd_requirements_input.json")
+
+    def mock_ask_for_json(_prompt: str):
+        raise RuntimeError("LLM engine error: All LLM providers failed")
+
+    monkeypatch.setattr(main.ai, "ask_for_json", mock_ask_for_json)
+
+    response = client.post("/extract-jd-requirements", json=payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["fallback_mode"] is True
+    assert "warning" in data
+    assert "generated_at" in data

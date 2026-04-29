@@ -43,20 +43,34 @@ def find_free_port(start_port: int) -> int:
                 return port
         port += 1
 
+def try_relaunch_with_python_312() -> bool:
+    if os.name != "nt":
+        return False
 
+    py_launcher = find_command("py", "py.exe")
+    if not py_launcher:
+        return False
 
+    if os.environ.get("GENR8CV_RELAUNCHED_312") == "1":
+        return False
 
+    env = os.environ.copy()
+    env["GENR8CV_RELAUNCHED_312"] = "1"
 
+    cmd = [py_launcher, "-3.12", os.path.abspath(__file__), *sys.argv[1:]]
+    warn("Attempting automatic relaunch with Python 3.12 via py launcher...")
+    subprocess.run(cmd, env=env, check=False)
+    return True
 
-
-
-def ensure_supported_python():
+def ensure_supported_python() -> bool:
     version = sys.version_info
     if version >= (3, 14):
-        raise RuntimeError(
-            "Python 3.14 is not supported by pinned dependencies (pydantic-core). "
-            "Use Python 3.12 (recommended) or 3.11."
+        warn(
+            "Python 3.14+ may fail with pinned dependencies (pydantic-core). "
+            "Python 3.12 is recommended."
         )
+        return False
+    return True
 
 def ensure_python_module(module_name: str, install_hint: str):
     if importlib.util.find_spec(module_name) is None:
@@ -90,7 +104,6 @@ def run_backend(port: int, watch_mode: bool):
         uvicorn_cmd.append("--reload")
 
     return subprocess.Popen(uvicorn_cmd, stdout=log_file, stderr=log_file)
-
 
 def run_frontend(port: int):
     log_file = open("logs/frontend.log", "w")
@@ -143,7 +156,7 @@ def main():
     args = parser.parse_args()
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    ensure_supported_python()
+    is_supported_python = ensure_supported_python()
     ensure_log_dir()
 
     backend_port = find_free_port(8000)
@@ -161,7 +174,7 @@ def main():
         except (RuntimeError, FileNotFoundError) as exc:
             warn(str(exc))
             info("Tip: use the same interpreter/venv for this script and backend dependencies.")
-            info("Example: py -3.12 -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt")
+            info("Example: py -3.12 -m venv .venv && .venv\\Scripts\\activate && pip install -r requirements.txt")
             sys.exit(1)
         time.sleep(3)
 
