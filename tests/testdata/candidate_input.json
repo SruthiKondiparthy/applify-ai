@@ -1,0 +1,33 @@
+{
+  "name": "Max Mustermann",
+  "email": "max.mustermann@example.com",
+  "phone": "+49 123 456789",
+  "address": "Berlin, Germany",
+  "summary": "Backend engineer with strong Python and FastAPI skills.",
+  "skills": ["Python", "FastAPI", "Docker"],
+  "experience": [
+    {
+      "job_title": "Software Engineer",
+      "company": "Example GmbH",
+      "start_date": "01/2021",
+      "end_date": "Present",
+      "location": "Berlin",
+      "responsibilities": ["Built APIs", "Improved performance"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "TU Berlin",
+      "degree": "M.Sc. Computer Science",
+      "start_date": "10/2018",
+      "end_date": "09/2020",
+      "location": "Berlin",
+      "note": "Focus on distributed systems"
+    }
+  ],
+  "languages": [{ "language": "German", "level": "C1" }],
+  "additional_info": "Available immediately",
+  "job_description": "Looking for a backend engineer with Python, FastAPI, Docker and cloud experience.",
+  "include_simple_version": true,
+  "want_pdf": false
+}

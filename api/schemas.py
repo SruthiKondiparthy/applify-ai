@@ -1,5 +1,5 @@
 # api/schemas.py
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
@@ -28,7 +28,7 @@ class LanguageItem(BaseModel):
 
 class CandidateInput(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = ""
     address: Optional[str] = ""
     birth_date: Optional[str] = None
@@ -43,3 +43,12 @@ class CandidateInput(BaseModel):
     job_description: str = Field(..., description="Full text of the target job ad")
     include_simple_version: Optional[bool] = False
     want_pdf: Optional[bool] = False
+
+
+class ResumeCompatibilityInput(BaseModel):
+    resume_text: str = Field(..., description="Plain text from uploaded or manually entered resume")
+    job_description: str = Field(..., description="Full text of the target job ad")
+
+
+class JDRequirementsInput(BaseModel):
+    job_description: str = Field(..., description="Full text of the target job ad")

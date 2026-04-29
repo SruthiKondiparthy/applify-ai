@@ -1,56 +1,79 @@
-# api/main.py
 import os
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Any, Dict
-from api.schemas import CandidateInput
-from api.ai_engine import AIEngine
-from api.format_engine import render_cv_text, render_cover_letter_text
-from api.utils import create_pdf_from_text, create_docx_from_text
 from datetime import datetime
+from typing import Any, Dict
+
+import uvicorn
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.ai_engine import AIEngine
+from api.format_engine import render_cover_letter_text, render_cv_text
+from api.schemas import CandidateInput, ResumeCompatibilityInput
+from api.utils import create_docx_from_text, create_pdf_from_text
+
 load_dotenv()
-app = FastAPI(title="Applify Backend", version="1.0")
+
+app = FastAPI(title="Genr8CV Backend", version="1.1")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# instantiate AI engine
-#ai = AIEngine(model=os.getenv("APPLIFY_MODEL"))
 ai = AIEngine()
+
+
+async def _extract_job_description(request: Request) -> str:
+    content_type = (request.headers.get("content-type") or "").lower()
+
+    if "application/json" in content_type:
+        payload = await request.json()
+        if isinstance(payload, dict):
+            jd = str(payload.get("job_description", "")).strip()
+            if jd:
+                return jd
+        if isinstance(payload, str):
+            jd = payload.strip()
+            if jd:
+                return jd
+
+    raw_text = (await request.body()).decode("utf-8", errors="ignore").strip()
+    if raw_text:
+        return raw_text
+
+    raise HTTPException(
+        status_code=422,
+        detail=(
+            "Provide the job description either as raw text/plain body or JSON: "
+            '{"job_description": "..."}'
+        ),
+    )
+
 
 @app.post("/generate-resume", response_model=Dict[str, Any])
 async def generate_resume(candidate: CandidateInput):
-    """
-    Generate CV + Cover Letter + Unterlagen Info
-    """
     payload = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate.dict()
     try:
         model_out = ai.generate_documents(payload)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Extract expected fields from the model output
     cv_text = model_out.get("cv_text", "")
     cover_letter_text = model_out.get("cover_letter_text", "")
     unterlagen_info = model_out.get("unterlagen_info", "")
     cv_simple = model_out.get("cv_simple", "")
     cover_letter_simple = model_out.get("cover_letter_simple", "")
 
-    # If model returned structured data for templating, render templates
     try:
         if isinstance(model_out.get("cv_data"), dict):
             cv_text = render_cv_text(model_out["cv_data"])
         if isinstance(model_out.get("cover_letter_data"), dict):
             cover_letter_text = render_cover_letter_text(model_out["cover_letter_data"])
     except Exception:
-        # if rendering fails, continue: use text fields from model
         pass
 
     response = {
@@ -59,23 +82,83 @@ async def generate_resume(candidate: CandidateInput):
         "unterlagen_info": unterlagen_info,
         "cv_simple": cv_simple,
         "cover_letter_simple": cover_letter_simple,
-        "generated_at": datetime.utcnow().isoformat() + "Z"
+        "generated_at": datetime.utcnow().isoformat() + "Z",
     }
 
-    # Optionally return PDF/DOCX if requested by client; to keep payload small we provide endpoints for downloads.
     if candidate.want_pdf:
         try:
-            pdf_bytes = create_pdf_from_text(f"Lebenslauf - {candidate.name}", cv_text + "\n\n" + cover_letter_text)
-            docx_bytes = create_docx_from_text(f"Lebenslauf - {candidate.name}", cv_text + "\n\n" + cover_letter_text)
-            # In this simple implementation we return base64 representations (or you can return presigned urls)
+            pdf_bytes = create_pdf_from_text(
+                f"Lebenslauf - {candidate.name}",
+                cv_text + "\n\n" + cover_letter_text,
+            )
+            docx_bytes = create_docx_from_text(
+                f"Lebenslauf - {candidate.name}",
+                cv_text + "\n\n" + cover_letter_text,
+            )
             import base64
+
             response["pdf_base64"] = base64.b64encode(pdf_bytes).decode("utf-8")
             response["docx_base64"] = base64.b64encode(docx_bytes).decode("utf-8")
         except Exception as e:
-            # Do not fail the whole request for PDF errors
             response["pdf_error"] = str(e)
 
     return response
 
+
+@app.post("/analyze-compatibility", response_model=Dict[str, Any])
+async def analyze_compatibility(payload: ResumeCompatibilityInput):
+    prompt = f"""
+You are a resume analyst for job applications.
+Return JSON only with this exact structure:
+{{
+  "match_score": <integer 0-100>,
+  "requirements": ["..."],
+  "strengths": ["..."],
+  "gaps": ["..."],
+  "recommended_documents": ["..."]
+}}
+Use concise bullet-style text.
+
+JOB_DESCRIPTION:
+{payload.job_description}
+
+RESUME_TEXT:
+{payload.resume_text}
+"""
+    try:
+        result = ai.ask_for_json(prompt)
+        result["generated_at"] = datetime.utcnow().isoformat() + "Z"
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/extract-jd-requirements", response_model=Dict[str, Any])
+async def extract_jd_requirements(request: Request):
+    job_description = await _extract_job_description(request)
+
+    prompt = f"""
+You are a hiring assistant. Extract role requirements from a job description.
+Return JSON only with this exact structure:
+{{
+  "job_title": "...",
+  "key_requirements": ["..."],
+  "must_have_skills": ["..."],
+  "optional_skills": ["..."],
+  "keywords": ["..."],
+  "suggested_resume_sections": ["..."]
+}}
+
+JOB_DESCRIPTION:
+{job_description}
+"""
+    try:
+        result = ai.ask_for_json(prompt)
+        result["generated_at"] = datetime.utcnow().isoformat() + "Z"
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
-    uvicorn.run("api.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)
