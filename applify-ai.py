@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import importlib.util
 import os
 import shutil
 import socket
@@ -45,6 +46,24 @@ def find_free_port(start_port: int) -> int:
 
 
 
+
+
+
+
+def ensure_supported_python():
+    version = sys.version_info
+    if version >= (3, 14):
+        raise RuntimeError(
+            "Python 3.14 is not supported by pinned dependencies (pydantic-core). "
+            "Use Python 3.12 (recommended) or 3.11."
+        )
+
+def ensure_python_module(module_name: str, install_hint: str):
+    if importlib.util.find_spec(module_name) is None:
+        raise RuntimeError(
+            f"Missing Python module '{module_name}'. {install_hint}"
+        )
+
 def find_command(*candidates: str) -> str | None:
     for cmd in candidates:
         path = shutil.which(cmd)
@@ -54,6 +73,15 @@ def find_command(*candidates: str) -> str | None:
 
 
 def run_backend(port: int, watch_mode: bool):
+    ensure_python_module(
+        "uvicorn",
+        "Activate your venv and run: pip install -r requirements.txt",
+    )
+    ensure_python_module(
+        "fastapi",
+        "Activate your venv and run: pip install -r requirements.txt",
+    )
+
     log_file = open("logs/backend.log", "w")
     success(f"Starting Backend (FastAPI) on port {port}...")
 
@@ -115,6 +143,7 @@ def main():
     args = parser.parse_args()
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    ensure_supported_python()
     ensure_log_dir()
 
     backend_port = find_free_port(8000)
@@ -124,10 +153,16 @@ def main():
     backend_port_global = backend_port
 
     while True:
-        backend = run_backend(backend_port, args.watch)
-        time.sleep(2)
+        try:
+            backend = run_backend(backend_port, args.watch)
+            time.sleep(2)
 
-        frontend = run_frontend(frontend_port)
+            frontend = run_frontend(frontend_port)
+        except (RuntimeError, FileNotFoundError) as exc:
+            warn(str(exc))
+            info("Tip: use the same interpreter/venv for this script and backend dependencies.")
+            info("Example: py -3.12 -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt")
+            sys.exit(1)
         time.sleep(3)
 
         webbrowser.open(f"http://localhost:{frontend_port}")
