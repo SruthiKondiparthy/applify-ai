@@ -6,7 +6,7 @@ import '../styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900">
+    <div className="flex flex-col min-h-screen bg-slate-950">
       <Navbar />
       <main className="flex-grow">
         <Component {...pageProps} />
@@ -16,20 +16,20 @@ export default function App({ Component, pageProps }: AppProps) {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#1e293b',
-            color: '#f1f5f9',
-            border: '1px solid #334155',
+            background: '#1e1b4b',
+            color: '#f8fafc',
+            border: '1px solid #c026d3',
           },
           success: {
             iconTheme: {
               primary: '#22c55e',
-              secondary: '#f1f5f9',
+              secondary: '#f8fafc',
             },
           },
           error: {
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#f1f5f9',
+              secondary: '#f8fafc',
             },
           },
         }}
