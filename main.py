@@ -27,9 +27,6 @@ app.add_middleware(
 
 ai = AIEngine()
 
-
-
-
 def _local_extract_jd_requirements(job_description: str) -> Dict[str, Any]:
     chunks = [part.strip() for part in re.split(r"[\n.;]", job_description) if part.strip()]
 
@@ -86,8 +83,6 @@ async def _extract_job_description(request: Request) -> str:
             '{"job_description": "..."}'
         ),
     )
-
-
 @app.post("/generate-resume", response_model=Dict[str, Any])
 async def generate_resume(candidate: CandidateInput):
     payload = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate.dict()

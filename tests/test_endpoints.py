@@ -120,8 +120,7 @@ def test_extract_jd_requirements_accepts_plain_text(monkeypatch):
     assert response.status_code == 200
     assert response.json()["job_title"] == "Backend Developer"
 
-
-def test_extract_jd_requirements_falls_back_when_llm_fails(monkeypatch):
+    def test_extract_jd_requirements_falls_back_when_llm_fails(monkeypatch):
     payload = _load_json("jd_requirements_input.json")
 
     def mock_ask_for_json(_prompt: str):

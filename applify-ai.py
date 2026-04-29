@@ -43,15 +43,6 @@ def find_free_port(start_port: int) -> int:
                 return port
         port += 1
 
-
-
-
-
-
-
-
-
-
 def try_relaunch_with_python_312() -> bool:
     if os.name != "nt":
         return False
@@ -113,7 +104,6 @@ def run_backend(port: int, watch_mode: bool):
         uvicorn_cmd.append("--reload")
 
     return subprocess.Popen(uvicorn_cmd, stdout=log_file, stderr=log_file)
-
 
 def run_frontend(port: int):
     log_file = open("logs/frontend.log", "w")
