@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
+import argparse
+import importlib.util
+import os
+import shutil
+import socket
 import subprocess
+import sys
 import time
 import webbrowser
-import sys
-import os
-import socket
-import argparse
-import threading
 
-# -------- COLOR OUTPUT -----------------------------------------
+
 class Color:
     GREEN = "\033[92m"
     BLUE = "\033[94m"
@@ -16,13 +17,25 @@ class Color:
     RED = "\033[91m"
     END = "\033[0m"
 
-def info(msg): print(f"{Color.BLUE}ℹ {msg}{Color.END}")
-def success(msg): print(f"{Color.GREEN}✔ {msg}{Color.END}")
-def warn(msg): print(f"{Color.YELLOW}⚠ {msg}{Color.END}")
-def error(msg): print(f"{Color.RED}✖ {msg}{Color.END}")
 
-# -------- PORT CHECK --------------------------------------------
-def find_free_port(start_port):
+def info(msg):
+    print(f"{Color.BLUE}ℹ {msg}{Color.END}")
+
+
+def success(msg):
+    print(f"{Color.GREEN}✔ {msg}{Color.END}")
+
+
+def warn(msg):
+    print(f"{Color.YELLOW}⚠ {msg}{Color.END}")
+
+
+def ensure_log_dir():
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+
+
+def find_free_port(start_port: int) -> int:
     port = start_port
     while True:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -30,43 +43,98 @@ def find_free_port(start_port):
                 return port
         port += 1
 
-# -------- LOGGING SETUP -----------------------------------------
-def ensure_log_dir():
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
 
-ensure_log_dir()
 
-# -------- START PROCESSES ----------------------------------------
-def run_backend(port, watch_mode):
+
+
+
+
+
+
+
+def try_relaunch_with_python_312() -> bool:
+    if os.name != "nt":
+        return False
+
+    py_launcher = find_command("py", "py.exe")
+    if not py_launcher:
+        return False
+
+    if os.environ.get("GENR8CV_RELAUNCHED_312") == "1":
+        return False
+
+    env = os.environ.copy()
+    env["GENR8CV_RELAUNCHED_312"] = "1"
+
+    cmd = [py_launcher, "-3.12", os.path.abspath(__file__), *sys.argv[1:]]
+    warn("Attempting automatic relaunch with Python 3.12 via py launcher...")
+    subprocess.run(cmd, env=env, check=False)
+    return True
+
+def ensure_supported_python() -> bool:
+    version = sys.version_info
+    if version >= (3, 14):
+        warn(
+            "Python 3.14+ may fail with pinned dependencies (pydantic-core). "
+            "Python 3.12 is recommended."
+        )
+        return False
+    return True
+
+def ensure_python_module(module_name: str, install_hint: str):
+    if importlib.util.find_spec(module_name) is None:
+        raise RuntimeError(
+            f"Missing Python module '{module_name}'. {install_hint}"
+        )
+
+def find_command(*candidates: str) -> str | None:
+    for cmd in candidates:
+        path = shutil.which(cmd)
+        if path:
+            return path
+    return None
+
+
+def run_backend(port: int, watch_mode: bool):
+    ensure_python_module(
+        "uvicorn",
+        "Activate your venv and run: pip install -r requirements.txt",
+    )
+    ensure_python_module(
+        "fastapi",
+        "Activate your venv and run: pip install -r requirements.txt",
+    )
+
     log_file = open("logs/backend.log", "w")
     success(f"Starting Backend (FastAPI) on port {port}...")
 
-    cmd = [
-        "uvicorn", "api.main:app",
-        "--host", "0.0.0.0",
-        "--port", str(port)
-    ]
-
+    uvicorn_cmd = [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(port)]
     if watch_mode:
-        cmd.append("--reload")
+        uvicorn_cmd.append("--reload")
 
-    return subprocess.Popen(cmd, stdout=log_file, stderr=log_file)
+    return subprocess.Popen(uvicorn_cmd, stdout=log_file, stderr=log_file)
 
-def run_frontend(port):
+
+def run_frontend(port: int):
     log_file = open("logs/frontend.log", "w")
-    success(f"Starting Frontend (Streamlit) on port {port}...")
+    success(f"Starting Frontend (Next.js) on port {port}...")
 
-    cmd = ["streamlit", "run", "ui/main.py", "--server.port", str(port)]
-    return subprocess.Popen(cmd, stdout=log_file, stderr=log_file)
+    env = os.environ.copy()
+    env["PORT"] = str(port)
+    env.setdefault("NEXT_PUBLIC_API_URL", "/api")
+    env.setdefault("BACKEND_API_URL", f"http://127.0.0.1:{backend_port_global}")
 
-# -------- WATCH MODE (AUTO RESTART) ------------------------------
-def watch_and_restart(cmd, label):
-    """
-    Simple file watcher using mtime to restart on changes.
-    """
-    import time
+    npm_cmd = find_command("npm", "npm.cmd")
+    if not npm_cmd:
+        raise FileNotFoundError(
+            "npm was not found in PATH. Install Node.js and ensure npm is available."
+        )
 
+    cmd = [npm_cmd, "run", "dev", "--", "--port", str(port)]
+    return subprocess.Popen(cmd, cwd="frontend", env=env, stdout=log_file, stderr=log_file)
+
+
+def watch_and_restart() -> bool:
     last_mtimes = {}
 
     while True:
@@ -75,67 +143,77 @@ def watch_and_restart(cmd, label):
 
         for root, _, files in os.walk("."):
             for f in files:
-                if f.endswith((".py", ".txt")):
+                if f.endswith((".py", ".ts", ".tsx", ".js", ".css", ".txt")):
                     path = os.path.join(root, f)
                     try:
                         mtime = os.path.getmtime(path)
-                    except:
+                    except OSError:
                         continue
                     if path not in last_mtimes:
                         last_mtimes[path] = mtime
                     elif last_mtimes[path] != mtime:
-                        changed = True
                         last_mtimes[path] = mtime
+                        changed = True
 
         if changed:
-            warn(f"Detected code change → restarting {label}...")
+            warn("Detected code change → restarting backend/frontend...")
             return True
 
-# -------- MAIN ----------------------------------------------------
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--watch", action="store_true",
-                        help="Enable auto-restart on file changes")
+    parser.add_argument("--watch", action="store_true", help="Enable auto-restart on file changes")
     args = parser.parse_args()
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    is_supported_python = ensure_supported_python()
+    ensure_log_dir()
 
     backend_port = find_free_port(8000)
-    frontend_port = find_free_port(8501)
+    frontend_port = find_free_port(3000)
+
+    global backend_port_global
+    backend_port_global = backend_port
 
     while True:
-        backend = run_backend(backend_port, args.watch)
-        time.sleep(2)
+        try:
+            backend = run_backend(backend_port, args.watch)
+            time.sleep(2)
 
-        frontend = run_frontend(frontend_port)
-        time.sleep(2)
+            frontend = run_frontend(frontend_port)
+        except (RuntimeError, FileNotFoundError) as exc:
+            warn(str(exc))
+            info("Tip: use the same interpreter/venv for this script and backend dependencies.")
+            info("Example: py -3.12 -m venv .venv && .venv\\Scripts\\activate && pip install -r requirements.txt")
+            sys.exit(1)
+        time.sleep(3)
 
         webbrowser.open(f"http://localhost:{frontend_port}")
 
-        success("Applify is running!")
+        success("Genr8CV is running!")
         info(f"Backend:  http://localhost:{backend_port}/docs")
         info(f"Frontend: http://localhost:{frontend_port}")
+        info("Logs: logs/backend.log and logs/frontend.log")
 
         if args.watch:
-            restarted_backend = watch_and_restart("backend", "backend/frontend")
-
-            if restarted_backend:
-                warn("Restarting both services...")
+            if watch_and_restart():
                 backend.terminate()
                 frontend.terminate()
                 time.sleep(1)
                 continue
-        else:
-            try:
-                backend.wait()
-                frontend.wait()
-            except KeyboardInterrupt:
-                warn("Shutting down...")
-                backend.terminate()
-                frontend.terminate()
-                sys.exit(0)
+
+        try:
+            backend.wait()
+            frontend.wait()
+        except KeyboardInterrupt:
+            warn("Shutting down...")
+            backend.terminate()
+            frontend.terminate()
+            sys.exit(0)
 
         break
 
+
 if __name__ == "__main__":
+    backend_port_global = 8000
     main()
