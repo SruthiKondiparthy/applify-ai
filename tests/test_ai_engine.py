@@ -1,54 +1,31 @@
-# tests/test_ai_engine.py
-
-import json
-import sys
-from pathlib import Path
-
-# Add repo root to Python path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 from api.ai_engine import AIEngine
 
-def test_generate_documents_mock():
-    """
-    Test AIEngine.generate_documents in mock mode, without calling real LLM APIs.
-    """
 
-    class MockAIEngine(AIEngine):
-        def generate_documents(self, candidate_payload, max_tokens=3000):
-            # Instead of calling hybrid_llm, return a dummy JSON
-            return {
-                "resume_text": f"Resume for {candidate_payload.get('name', 'Unknown')}",
-                "cover_letter_text": f"Cover letter for {candidate_payload.get('name', 'Unknown')}",
-                "pdf_generated": False
-            }
-
-    # Initialize mock engine
-    engine = MockAIEngine()
-
-    # Dummy candidate data
-    candidate_payload = {
-        "name": "Max Mustermann",
-        "email": "max.mustermann@example.com",
-        "phone": "+49 123 456789",
-        "education": "M.Sc. in Computer Science, TU Berlin",
-        "experience": "3 years as Software Engineer at Example GmbH",
-        "skills": ["Python", "FastAPI", "Streamlit", "Machine Learning"],
-        "languages": ["German", "English"],
-        "want_pdf": False
-    }
-
-    # Call generate_documents
-    result = engine.generate_documents(candidate_payload)
-
-    print("✅ Mock generate_documents output:")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
-
-    # Basic assertions (optional for CI)
-    assert "resume_text" in result
-    assert "cover_letter_text" in result
-    assert result["pdf_generated"] is False
+def test_parse_json_plain_object():
+    output = '{"cv_text": "ok", "cover_letter_text": "ok"}'
+    parsed = AIEngine._parse_json(output)
+    assert parsed["cv_text"] == "ok"
 
 
-# Run test directly if executed
-if __name__ == "__main__":
-    test_generate_documents_mock()
+def test_parse_json_with_wrapped_text():
+    output = 'Here is your result:\n{"match_score": 90, "gaps": ["AWS"]}\nThanks!'
+    parsed = AIEngine._parse_json(output)
+    assert parsed["match_score"] == 90
+    assert parsed["gaps"] == ["AWS"]
+
+
+def test_generate_documents_uses_ask_for_json(monkeypatch):
+    engine = AIEngine()
+    captured = {}
+
+    def mock_ask(prompt: str):
+        captured["prompt"] = prompt
+        return {"cv_text": "Generated CV"}
+
+    monkeypatch.setattr(engine, "ask_for_json", mock_ask)
+
+    result = engine.generate_documents({"name": "Max", "job_description": "Backend role"})
+
+    assert result["cv_text"] == "Generated CV"
+    assert "USER_CANDIDATE_DATA" in captured["prompt"]
+    assert "Max" in captured["prompt"]

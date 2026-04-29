@@ -4,13 +4,17 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 15, 23, 42;
+  --background-start-rgb: 2, 6, 23;
   --background-end-rgb: 15, 23, 42;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  background:
+    radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.22), transparent 35%),
+    radial-gradient(circle at 90% 20%, rgba(236, 72, 153, 0.2), transparent 40%),
+    radial-gradient(circle at 60% 80%, rgba(99, 102, 241, 0.2), transparent 35%),
+    linear-gradient(160deg, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
   min-height: 100vh;
 }
 
@@ -34,20 +38,19 @@ body {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #1e1b4b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #db2777;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #f97316;
 }
